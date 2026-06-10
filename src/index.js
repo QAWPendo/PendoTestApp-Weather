@@ -8,6 +8,7 @@ const { CacheService } = require("./services/cache");
 const { GeocodingService } = require("./services/geocoding");
 const { OpenWeatherService } = require("./services/openWeather");
 const { WeatherService } = require("./services/weatherService");
+const { FeedbackStore } = require("./services/feedbackStore");
 
 const config = loadEnv();
 
@@ -19,12 +20,14 @@ const cache = new CacheService({
 const geocoding = new GeocodingService(config.OPENWEATHER_API_KEY, cache);
 const openWeather = new OpenWeatherService(config.OPENWEATHER_API_KEY, cache);
 const weatherService = new WeatherService(geocoding, openWeather);
+const feedbackStore = new FeedbackStore();
 
-const app = createApp({ weatherService, config });
+const app = createApp({ weatherService, feedbackStore, config });
 
 const server = app.listen(config.PORT, () => {
   console.log(`Weather Agent API running on port ${config.PORT}`);
   console.log(`Swagger docs available at http://localhost:${config.PORT}/docs`);
+  console.log(`Feedback form available at http://localhost:${config.PORT}/feedback`);
 });
 
 function shutdown(signal) {

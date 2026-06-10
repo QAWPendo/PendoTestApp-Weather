@@ -32,7 +32,7 @@ cp .env.example .env
 npm start
 ```
 
-The API will be available at `http://localhost:3000`. Swagger docs at `http://localhost:3000/docs`.
+The API will be available at `http://localhost:3000`. Swagger docs at `http://localhost:3000/docs`. Feedback form at `http://localhost:3000/feedback`.
 
 ### Docker Compose (with Redis)
 
@@ -65,6 +65,8 @@ docker compose up --build
 | `GET` | `/weather/summary?location=` | All of the above in one call |
 | `GET` | `/docs` | Swagger UI |
 | `GET` | `/openapi.json` | OpenAPI spec |
+| `GET` | `/feedback` | Feedback form page |
+| `POST` | `/feedback` | Submit feedback (JSON body) |
 
 ### Location Formats
 
