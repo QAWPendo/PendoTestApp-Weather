@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: weather-agent-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: OPENWEATHER_API_KEY
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: CACHE_TTL_SECONDS
+        value: "3600"
+      - key: RATE_LIMIT_MAX
+        value: "100"
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "60000"
