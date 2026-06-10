@@ -16,7 +16,7 @@ const cache = new CacheService({
   ttlSeconds: config.CACHE_TTL_SECONDS,
 });
 
-const geocoding = new GeocodingService(config.OPENWEATHER_API_KEY);
+const geocoding = new GeocodingService(config.OPENWEATHER_API_KEY, cache);
 const openWeather = new OpenWeatherService(config.OPENWEATHER_API_KEY, cache);
 const weatherService = new WeatherService(geocoding, openWeather);
 

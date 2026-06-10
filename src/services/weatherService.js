@@ -31,9 +31,7 @@ class WeatherService {
 
   async getCurrent(locationStr) {
     const location = await this.resolveLocation(locationStr);
-    const data = await this.openWeather.getOneCall(location.lat, location.lon, {
-      exclude: "minutely,hourly,daily,alerts",
-    });
+    const data = await this.openWeather.getOneCall(location.lat, location.lon);
     const current = transformCurrent(data.current, data.timezone_offset);
     const quality = data._fromCache ? "estimated" : "high";
 
@@ -46,9 +44,7 @@ class WeatherService {
 
   async getHourly(locationStr, hours) {
     const location = await this.resolveLocation(locationStr);
-    const data = await this.openWeather.getOneCall(location.lat, location.lon, {
-      exclude: "minutely,daily,alerts",
-    });
+    const data = await this.openWeather.getOneCall(location.lat, location.lon);
     const hourly = transformHourly(data.hourly, data.timezone_offset, hours);
     const quality = data._fromCache ? "estimated" : "high";
 
@@ -62,9 +58,7 @@ class WeatherService {
 
   async getForecast(locationStr, days) {
     const location = await this.resolveLocation(locationStr);
-    const data = await this.openWeather.getOneCall(location.lat, location.lon, {
-      exclude: "minutely,hourly,alerts",
-    });
+    const data = await this.openWeather.getOneCall(location.lat, location.lon);
     const daily = transformDaily(data.daily, data.timezone_offset, days);
     const quality = data._fromCache ? "estimated" : "high";
 
@@ -78,16 +72,10 @@ class WeatherService {
 
   async getAlerts(locationStr) {
     const location = await this.resolveLocation(locationStr);
-    const { alerts: rawAlerts, quality, fromCache } = await this.openWeather.getAlerts(
-      location.lat,
-      location.lon
-    );
+    const { alerts: rawAlerts, quality, fromCache, timezone_offset } =
+      await this.openWeather.getAlerts(location.lat, location.lon);
 
-    const data = await this.openWeather.getOneCall(location.lat, location.lon, {
-      exclude: "current,minutely,hourly,daily,alerts",
-    }).catch(() => ({ timezone_offset: 0 }));
-
-    const alerts = transformAlerts(rawAlerts, data.timezone_offset || 0);
+    const alerts = transformAlerts(rawAlerts, timezone_offset || 0);
 
     return {
       meta: buildMeta(location, quality, fromCache),
@@ -105,9 +93,7 @@ class WeatherService {
     const current = transformCurrent(data.current, data.timezone_offset);
     const hourly = transformHourly(data.hourly, data.timezone_offset, hours);
     const daily = transformDaily(data.daily, data.timezone_offset, days);
-
-    const { alerts: rawAlerts } = await this.openWeather.getAlerts(location.lat, location.lon);
-    const alerts = transformAlerts(rawAlerts, data.timezone_offset);
+    const alerts = transformAlerts(data.alerts, data.timezone_offset);
 
     return {
       meta: buildMeta(location, quality, data._fromCache),

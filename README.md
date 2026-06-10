@@ -7,7 +7,7 @@ A REST API service that wraps [OpenWeatherMap One Call API 3.0](https://openweat
 - **Core endpoints** — current conditions, hourly forecast (up to 48h), 7-day daily forecast, severe weather alerts, and a combined summary
 - **Flexible locations** — city name, zip code, or `lat,lng` coordinates
 - **AI-agent friendly** — natural language summaries, dual metric/imperial units, condition codes, ISO 8601 timestamps, and data quality flags
-- **Reliability** — Redis or in-memory caching (12 min default), rate limiting (100 req/min), retry logic, graceful alert fallbacks
+- **Reliability** — Redis or in-memory caching (1 hour minimum — at most one OpenWeatherMap call per location per hour), rate limiting (100 req/min), retry logic, graceful alert fallbacks
 - **Documentation** — OpenAPI 3.0 spec at `/docs` and `/openapi.json`
 
 ## Quick Start
@@ -48,7 +48,7 @@ docker compose up --build
 | `OPENWEATHER_API_KEY` | Yes | — | OpenWeatherMap API key |
 | `PORT` | No | `3000` | Server port |
 | `NODE_ENV` | No | `development` | Environment |
-| `CACHE_TTL_SECONDS` | No | `720` | Cache TTL (12 minutes) |
+| `CACHE_TTL_SECONDS` | No | `3600` | Cache TTL in seconds (min 3600 = 1 hour; limits API calls) |
 | `REDIS_URL` | No | — | Redis connection URL |
 | `RATE_LIMIT_MAX` | No | `100` | Max requests per window |
 | `RATE_LIMIT_WINDOW_MS` | No | `60000` | Rate limit window (ms) |
@@ -166,6 +166,16 @@ docker run -p 3000:3000 -e OPENWEATHER_API_KEY=your_key weather-agent-api
 
 Set `OPENWEATHER_API_KEY` in your platform's environment variables. Optionally add a Redis instance and set `REDIS_URL`.
 
+## API call limits
+
+OpenWeatherMap responses are cached for **at least 1 hour** per location. Within that window:
+
+- All endpoints (`/current`, `/hourly`, `/forecast`, `/alerts`, `/summary`) share a single cached One Call response
+- Geocoding results (city, zip, coordinates) are also cached for 1 hour
+- Concurrent requests for the same location are deduplicated so only one upstream call is made
+
+This means each unique location triggers at most **one weather API call** and **one geocoding call** per hour.
+
 ## Architecture
 
 ```
@@ -174,7 +184,7 @@ Client (AI Agent)
        ▼
   Express API ──► Rate Limiter ──► Validation (Zod)
        │
-       ├──► Cache (Redis / in-memory, 12 min TTL)
+       ├──► Cache (Redis / in-memory, 1 hour TTL)
        │
        └──► OpenWeatherMap
               ├── Geocoding API (city / zip / reverse)

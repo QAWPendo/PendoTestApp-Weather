@@ -10,7 +10,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: CACHE_TTL_SECONDS
-        value: "720"
+        value: "3600"
       - key: RATE_LIMIT_MAX
         value: "100"
       - key: RATE_LIMIT_WINDOW_MS

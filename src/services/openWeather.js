@@ -9,33 +9,45 @@ class OpenWeatherService {
   constructor(apiKey, cache) {
     this.apiKey = apiKey;
     this.cache = cache;
+    this.inflight = new Map();
   }
 
-  cacheKey(lat, lon, exclude) {
-    return `owm:${lat.toFixed(4)}:${lon.toFixed(4)}:${exclude || "full"}`;
+  cacheKey(lat, lon) {
+    return `owm:${lat.toFixed(4)}:${lon.toFixed(4)}`;
   }
 
-  async getOneCall(lat, lon, { exclude } = {}) {
-    const key = this.cacheKey(lat, lon, exclude);
+  async getOneCall(lat, lon) {
+    const key = this.cacheKey(lat, lon);
     const cached = await this.cache.get(key);
     if (cached) {
       return { ...cached, _fromCache: true };
     }
 
+    let fetchPromise = this.inflight.get(key);
+    if (!fetchPromise) {
+      fetchPromise = this.fetchAndStore(key, lat, lon).finally(() => {
+        this.inflight.delete(key);
+      });
+      this.inflight.set(key, fetchPromise);
+    }
+
+    const data = await fetchPromise;
+    return { ...data, _fromCache: false };
+  }
+
+  async fetchAndStore(key, lat, lon) {
     const params = new URLSearchParams({
       lat: String(lat),
       lon: String(lon),
       units: "metric",
       appid: this.apiKey,
     });
-    if (exclude) {
-      params.set("exclude", exclude);
-    }
 
     const url = `${ONE_CALL_BASE}?${params.toString()}`;
+    console.log(`OpenWeatherMap API call: ${key}`);
     const data = await this.fetchOneCall(url);
     await this.cache.set(key, data);
-    return { ...data, _fromCache: false };
+    return data;
   }
 
   async fetchOneCall(url) {
@@ -66,17 +78,19 @@ class OpenWeatherService {
 
   async getAlerts(lat, lon) {
     try {
-      const data = await this.getOneCall(lat, lon, { exclude: "current,minutely,hourly,daily" });
+      const data = await this.getOneCall(lat, lon);
       return {
         alerts: data.alerts || [],
-        quality: "high",
+        quality: data._fromCache ? "estimated" : "high",
         fromCache: data._fromCache,
+        timezone_offset: data.timezone_offset,
       };
     } catch {
       return {
         alerts: [],
         quality: "unavailable",
         fromCache: false,
+        timezone_offset: 0,
       };
     }
   }
