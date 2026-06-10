@@ -134,7 +134,7 @@ class GeocodingService {
         if (response.status === 401 || response.status === 403) {
           throw new AppError(
             ERROR_CODES.WEATHER_API_ERROR,
-            "OpenWeatherMap API key is invalid or not yet activated",
+            "OpenWeatherMap API key is invalid, not yet activated, or lacks required API access",
             502
           );
         }

@@ -160,7 +160,7 @@ function transformHourly(hourly, timezoneOffset, hours) {
       windSpeed: hour.wind_speed,
       windGust: hour.wind_gust,
       pressure: hour.pressure,
-      precipitation: hour.pop != null ? Math.round(hour.pop * 100) / 100 : 0,
+      precipitation: hour.rain?.["1h"] || hour.snow?.["1h"] || 0,
       dewPoint: hour.dew_point,
     };
 
@@ -210,6 +210,7 @@ function transformDaily(daily, timezoneOffset, days) {
 
 function transformAlerts(alerts, timezoneOffset) {
   return (alerts || []).map((alert) => ({
+    id: alert.id || null,
     sender: alert.sender_name,
     event: alert.event,
     start: toIso8601(alert.start, timezoneOffset),

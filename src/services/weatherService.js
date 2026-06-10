@@ -32,6 +32,13 @@ class WeatherService {
   async getCurrent(locationStr) {
     const location = await this.resolveLocation(locationStr);
     const data = await this.openWeather.getOneCall(location.lat, location.lon);
+    if (!data.current) {
+      throw new AppError(
+        ERROR_CODES.WEATHER_API_ERROR,
+        "Current weather data unavailable for this location",
+        502
+      );
+    }
     const current = transformCurrent(data.current, data.timezone_offset);
     const quality = data._fromCache ? "estimated" : "high";
 
@@ -88,12 +95,13 @@ class WeatherService {
   async getSummary(locationStr, { hours = 24, days = 7 } = {}) {
     const location = await this.resolveLocation(locationStr);
     const data = await this.openWeather.getOneCall(location.lat, location.lon);
+    const { alerts: rawAlerts } = await this.openWeather.getAlerts(location.lat, location.lon);
     const quality = data._fromCache ? "estimated" : "high";
 
     const current = transformCurrent(data.current, data.timezone_offset);
     const hourly = transformHourly(data.hourly, data.timezone_offset, hours);
     const daily = transformDaily(data.daily, data.timezone_offset, days);
-    const alerts = transformAlerts(data.alerts, data.timezone_offset);
+    const alerts = transformAlerts(rawAlerts, data.timezone_offset);
 
     return {
       meta: buildMeta(location, quality, data._fromCache),

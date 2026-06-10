@@ -9,7 +9,7 @@ const options = {
       title: "Weather Agent API",
       version: "1.0.0",
       description:
-        "REST API wrapping OpenWeatherMap One Call API 3.0, purpose-built for AI agent consumption with clean, structured JSON responses.",
+        "REST API wrapping OpenWeatherMap One Call API 4.0, purpose-built for AI agent consumption with clean, structured JSON responses.",
       contact: {
         name: "Weather Agent API",
       },

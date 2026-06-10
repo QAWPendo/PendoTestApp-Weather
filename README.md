@@ -1,6 +1,6 @@
 # Weather Agent API
 
-A REST API service that wraps [OpenWeatherMap One Call API 3.0](https://openweathermap.org/api/one-call-3), purpose-built for AI agent consumption with clean, structured JSON responses.
+A REST API service that wraps [OpenWeatherMap One Call API 4.0](https://openweathermap.org/api/one-call-4), purpose-built for AI agent consumption with clean, structured JSON responses.
 
 ## Features
 
@@ -15,7 +15,7 @@ A REST API service that wraps [OpenWeatherMap One Call API 3.0](https://openweat
 ### Prerequisites
 
 - Node.js 18+
-- OpenWeatherMap API key with **One Call API 3.0** subscription
+- OpenWeatherMap API key with **One Call API 4.0** (One Call by Call) subscription
 - Redis (optional — falls back to in-memory cache)
 
 ### Local Development
@@ -170,11 +170,13 @@ Set `OPENWEATHER_API_KEY` in your platform's environment variables. Optionally a
 
 OpenWeatherMap responses are cached for **at least 1 hour** per location. Within that window:
 
-- All endpoints (`/current`, `/hourly`, `/forecast`, `/alerts`, `/summary`) share a single cached One Call response
+- All endpoints share a single cached weather bundle (current + hourly + daily timelines)
+- On cache refresh, One Call API 4.0 requires **3 upstream calls** per location (current, 1-hour timeline, 1-day timeline) — these are fetched together and cached as one bundle
+- Weather alert details are fetched by ID and cached separately for 1 hour
 - Geocoding results (city, zip, coordinates) are also cached for 1 hour
-- Concurrent requests for the same location are deduplicated so only one upstream call is made
+- Concurrent requests for the same location are deduplicated
 
-This means each unique location triggers at most **one weather API call** and **one geocoding call** per hour.
+**Note:** The hourly timeline returns up to 20 hours per API call (48 hours would require additional paginated calls). Daily timeline returns up to 10 days per call.
 
 ## Architecture
 
@@ -188,7 +190,7 @@ Client (AI Agent)
        │
        └──► OpenWeatherMap
               ├── Geocoding API (city / zip / reverse)
-              └── One Call API 3.0 (current, hourly, daily, alerts)
+              └── One Call API 4.0 (current, 1h timeline, 1day timeline, alerts)
 ```
 
 ## License
