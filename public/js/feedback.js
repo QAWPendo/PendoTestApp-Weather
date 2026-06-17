@@ -42,6 +42,16 @@ form.addEventListener("submit", async (event) => {
 
     form.reset();
     setStatus("Thanks for your feedback! We received your message.", "success");
+
+    if (typeof pendo !== "undefined") {
+      pendo.track("feedback_submitted", {
+        category: payload.category,
+        rating: payload.rating || 0,
+        has_name: !!payload.name,
+        has_email: !!payload.email,
+        message_length: (payload.message || "").length,
+      });
+    }
   } catch {
     setStatus("Unable to submit feedback right now. Please try again.", "error");
   } finally {
