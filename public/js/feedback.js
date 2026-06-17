@@ -1,5 +1,11 @@
 console.log("hello world");
 
+pendo.initialize({
+  visitor: {
+    id: ''
+  }
+});
+
 const form = document.getElementById("feedback-form");
 const statusEl = document.getElementById("status");
 const submitBtn = document.getElementById("submit-btn");
