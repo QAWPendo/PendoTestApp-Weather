@@ -2,6 +2,7 @@ console.log("hello world");
 
 const { AppError, ERROR_CODES } = require("../utils/errors");
 const { withRetry } = require("../utils/retry");
+const { pendoTrack } = require("./pendoTracker");
 
 const GEO_BASE = "https://api.openweathermap.org/geo/1.0";
 
@@ -27,6 +28,7 @@ class GeocodingService {
       const key = this.cacheKey(parsedLocation);
       const cached = await this.cache.get(key);
       if (cached) {
+        this._trackGeocode(parsedLocation, cached, true);
         return cached;
       }
 
@@ -39,15 +41,24 @@ class GeocodingService {
         state: place?.state || null,
       };
       await this.cache.set(key, resolved);
+      this._trackGeocode(parsedLocation, resolved, false);
       return resolved;
     }
 
     if (parsedLocation.type === "zip") {
-      return this.geocodeZip(parsedLocation.zip, parsedLocation.country);
+      const key = this.cacheKey(parsedLocation);
+      const fromCache = !!(await this.cache.get(key));
+      const resolved = await this.geocodeZip(parsedLocation.zip, parsedLocation.country);
+      this._trackGeocode(parsedLocation, resolved, fromCache);
+      return resolved;
     }
 
     if (parsedLocation.type === "city") {
-      return this.geocodeCity(parsedLocation.query);
+      const key = this.cacheKey(parsedLocation);
+      const fromCache = !!(await this.cache.get(key));
+      const resolved = await this.geocodeCity(parsedLocation.query);
+      this._trackGeocode(parsedLocation, resolved, fromCache);
+      return resolved;
     }
 
     throw new AppError(
@@ -55,6 +66,27 @@ class GeocodingService {
       parsedLocation.reason || "Invalid location format",
       400
     );
+  }
+
+  _trackGeocode(parsedLocation, resolved, fromCache) {
+    try {
+      const inputQuery = parsedLocation.type === "coordinates"
+        ? `${parsedLocation.lat},${parsedLocation.lon}`
+        : parsedLocation.type === "zip"
+          ? parsedLocation.zip
+          : (parsedLocation.query || "").substring(0, 100);
+
+      pendoTrack("location_geocoded", "system", "system", {
+        input_type: parsedLocation.type,
+        input_query: inputQuery,
+        resolved_name: resolved.name,
+        resolved_country: resolved.country,
+        resolved_state: resolved.state,
+        resolved_lat: resolved.lat,
+        resolved_lon: resolved.lon,
+        from_cache: fromCache,
+      });
+    } catch (_) { /* tracking must not affect geocoding */ }
   }
 
   async geocodeCity(query) {
