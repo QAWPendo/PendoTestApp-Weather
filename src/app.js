@@ -17,7 +17,7 @@ const { createFeedbackRouter } = require("./routes/feedback");
 function createApp({ weatherService, feedbackStore, config }) {
   const app = express();
 
-  app.use(helmet());
+  app.use(helmet({ contentSecurityPolicy: false }));
   app.use(cors());
   app.use(express.json());
   app.use(express.static(path.join(__dirname, "..", "public")));
