@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feedback | Weather Agent API</title>
+    <meta
+      name="description"
+      content="Share feedback about the Weather Agent API — bugs, feature ideas, and general comments."
+    />
+    <link rel="stylesheet" href="/css/feedback.css" />
+    <script>
+(function(apiKey){
+    (function(p,e,n,d,o){var v,w,x,y,z;o=p[d]=p[d]||{};o._q=o._q||[];
+    v=['initialize','identify','updateOptions','pageLoad','track', 'trackAgent'];for(w=0,x=v.length;w<x;++w)(function(m){
+    o[m]=o[m]||function(){o._q[m===v[0]?'unshift':'push']([m].concat([].slice.call(arguments,0)));};})(v[w]);
+    y=e.createElement(n);y.async=!0;y.src='https://cdn.pendo-dev.pendo-dev.com/agent/static/'+apiKey+'/pendo.js';
+    z=e.getElementsByTagName(n)[0];z.parentNode.insertBefore(y,z);})(window,document,'script','pendo');
+})('bece21f7-4586-4a59-bd87-b6a46e9df2c5');
+</script>
+  </head>
+  <body>
+    <main class="page">
+      <header class="header">
+        <p class="eyebrow">Weather Agent API</p>
+        <h1>Send us feedback</h1>
+        <p class="lead">
+          Tell us what is working, what is not, or what you would like to see next.
+          Your input helps improve the API for humans and AI agents alike.
+        </p>
+      </header>
+
+      <section class="card">
+        <form id="feedback-form" class="grid" novalidate>
+          <div class="grid two">
+            <label>
+              Name
+              <span class="label-hint">Optional</span>
+              <input type="text" name="name" maxlength="100" autocomplete="name" />
+            </label>
+
+            <label>
+              Email
+              <span class="label-hint">Optional — only if you want a reply</span>
+              <input type="email" name="email" maxlength="200" autocomplete="email" />
+            </label>
+          </div>
+
+          <div class="grid two">
+            <label>
+              Category
+              <select name="category">
+                <option value="general">General feedback</option>
+                <option value="api">API / data quality</option>
+                <option value="bug">Bug report</option>
+                <option value="feature">Feature request</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+
+            <label>
+              Rating
+              <span class="label-hint">Optional</span>
+              <select name="rating">
+                <option value="">Select a rating</option>
+                <option value="5">5 — Excellent</option>
+                <option value="4">4 — Good</option>
+                <option value="3">3 — Okay</option>
+                <option value="2">2 — Needs work</option>
+                <option value="1">1 — Poor</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Message
+            <span class="label-hint">Required — at least 10 characters</span>
+            <textarea
+              name="message"
+              required
+              minlength="10"
+              maxlength="2000"
+              placeholder="What should we know?"
+            ></textarea>
+          </label>
+
+          <div class="actions">
+            <button id="submit-btn" type="submit">Send feedback</button>
+            <div class="links">
+              <a href="/docs">API docs</a>
+              <a href="/health">Health check</a>
+            </div>
+          </div>
+        </form>
+
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <script src="/js/feedback.js"></script>
+  </body>
+</html>

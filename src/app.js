@@ -1,5 +1,6 @@
 console.log("hello world");
 
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -11,13 +12,15 @@ const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 const { createRateLimiter } = require("./middleware/rateLimiter");
 const healthRouter = require("./routes/health");
 const { createWeatherRouter } = require("./routes/weather");
+const { createFeedbackRouter } = require("./routes/feedback");
 
-function createApp({ weatherService, config }) {
+function createApp({ weatherService, feedbackStore, config }) {
   const app = express();
 
-  app.use(helmet());
+  app.use(helmet({ contentSecurityPolicy: false }));
   app.use(cors());
   app.use(express.json());
+  app.use(express.static(path.join(__dirname, "..", "public")));
   app.use(morgan(config.NODE_ENV === "production" ? "combined" : "dev"));
   app.use(createRateLimiter({
     max: config.RATE_LIMIT_MAX,
@@ -34,6 +37,7 @@ function createApp({ weatherService, config }) {
 
   app.use("/health", healthRouter);
   app.use("/weather", createWeatherRouter(weatherService));
+  app.use("/feedback", createFeedbackRouter(feedbackStore));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
