@@ -14,6 +14,8 @@ const envSchema = z.object({
   REDIS_URL: z.string().optional(),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60000),
+  PENDO_API_KEY: z.string().optional(),
+  PENDO_INTEGRATION_KEY: z.string().optional(),
 });
 
 function loadEnv() {
