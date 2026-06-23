@@ -2,6 +2,7 @@ console.log("hello world");
 
 const { AppError, ERROR_CODES } = require("../utils/errors");
 const { withRetry } = require("../utils/retry");
+const { trackEvent } = require("./pendoTrack");
 
 const GEO_BASE = "https://api.openweathermap.org/geo/1.0";
 
@@ -23,38 +24,46 @@ class GeocodingService {
   }
 
   async resolve(parsedLocation) {
+    let result;
+    let wasCached = false;
+
     if (parsedLocation.type === "coordinates") {
       const key = this.cacheKey(parsedLocation);
       const cached = await this.cache.get(key);
       if (cached) {
-        return cached;
+        result = cached;
+        wasCached = true;
+      } else {
+        const place = await this.reverseGeocode(parsedLocation.lat, parsedLocation.lon);
+        result = {
+          lat: parsedLocation.lat,
+          lon: parsedLocation.lon,
+          name: place?.name || "Unknown",
+          country: place?.country || null,
+          state: place?.state || null,
+        };
+        await this.cache.set(key, result);
       }
-
-      const place = await this.reverseGeocode(parsedLocation.lat, parsedLocation.lon);
-      const resolved = {
-        lat: parsedLocation.lat,
-        lon: parsedLocation.lon,
-        name: place?.name || "Unknown",
-        country: place?.country || null,
-        state: place?.state || null,
-      };
-      await this.cache.set(key, resolved);
-      return resolved;
+    } else if (parsedLocation.type === "zip") {
+      result = await this.geocodeZip(parsedLocation.zip, parsedLocation.country);
+    } else if (parsedLocation.type === "city") {
+      result = await this.geocodeCity(parsedLocation.query);
+    } else {
+      throw new AppError(
+        ERROR_CODES.INVALID_LOCATION,
+        parsedLocation.reason || "Invalid location format",
+        400
+      );
     }
 
-    if (parsedLocation.type === "zip") {
-      return this.geocodeZip(parsedLocation.zip, parsedLocation.country);
-    }
+    trackEvent("location_geocoded", "server", "api-consumers", {
+      location_input: parsedLocation.query || parsedLocation.zip || `${parsedLocation.lat},${parsedLocation.lon}`,
+      location_type: parsedLocation.type,
+      resolved_name: result.name,
+      cached: wasCached,
+    });
 
-    if (parsedLocation.type === "city") {
-      return this.geocodeCity(parsedLocation.query);
-    }
-
-    throw new AppError(
-      ERROR_CODES.INVALID_LOCATION,
-      parsedLocation.reason || "Invalid location format",
-      400
-    );
+    return result;
   }
 
   async geocodeCity(query) {
